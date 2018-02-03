@@ -34,3 +34,30 @@ class QIQOWorker(threading.Thread):
 
             # all is done
             self.queue.task_done()
+
+class QIWorker(threading.Thread):
+    """Gets a value from an input Queue and pass the value to the worker_fun.
+
+    The thread is stopped when the stop_event is set.
+    """
+    def __init__(self, worker_fun, queue_in, stop_event, *args, **kwargs):
+        threading.Thread.__init__(self)
+        self.queue_in = queue_in
+        self.worker_fun = worker_fun
+        self.args = args
+        self.kwargs = kwargs
+        self.stop_event = stop_event
+
+    def run(self):
+        while not self.stop_event.is_set():
+            # get a proxy from queue
+            try:
+                raw_product = self.queue_in.get(timeout=1)
+            except queue.Empty:  # if queue is empty, return to the start of the loop
+                continue
+
+            # do work on the raw product
+            self.worker_fun(raw_product, *self.args, **self.kwargs)
+
+            # all is done
+            self.queue.task_done()
