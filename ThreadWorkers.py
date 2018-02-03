@@ -35,18 +35,22 @@ class QIQOWorker(threading.Thread):
             # all is done
             self.queue.task_done()
 
+
 class QIWorker(threading.Thread):
     """Gets a value from an input Queue and pass the value to the worker_fun.
 
     The thread is stopped when the stop_event is set.
     """
-    def __init__(self, worker_fun, queue_in, stop_event, *args, **kwargs):
+    def __init__(self, worker_fun, queue_in, is_daemon=True, stop_event=None, *args, **kwargs):
         threading.Thread.__init__(self)
         self.queue_in = queue_in
         self.worker_fun = worker_fun
         self.args = args
         self.kwargs = kwargs
-        self.stop_event = stop_event
+        if is_daemon is not True:
+            self.stop_event = stop_event # not a daemon, stop_event must be provided to stop the thread
+        else:
+            self.stop_event = threading.Event()  # is a daemon, run forever
 
     def run(self):
         while not self.stop_event.is_set():
